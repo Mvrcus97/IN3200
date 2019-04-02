@@ -59,8 +59,9 @@ void count_to_and_from(char* string, FILE* fptr, int** to_ctr, int** from_ctr, i
   //Read all values from file
   while(fgets(string,100,fptr)){
     sscanf(string, "%d %d", &fromID, &toID);
-    from_counter[fromID] ++;
+    if(fromID == toID) continue;
     to_counter[toID] ++;
+    from_counter[fromID] ++;
   }// end while
 
 
@@ -95,7 +96,7 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
   int i;
 
   // Place correct values of the row_ptr.
-  for(i = 1; i<nodes+1; i++){
+  for(i = 1; i<=nodes+1; i++){
     row_ptr[curr_row_idx] = row_ptr[curr_row_idx-1] + to_ctr[i-1];
     curr_row_idx ++;
   }
@@ -111,6 +112,7 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
   }
 
   int curr_idx;
+  int self_link = 0;
   i = 0;
   skip_lines(string, fptr, 4); //skip the first 4 lines in txt file
   while(fgets(string,100,fptr)){
@@ -119,7 +121,8 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
     fromArr[i] = fromID;
     toArr[i]   =   toID;
     if(fromID == toID){
-      printf("SKIPPING\n" );
+      self_link ++;
+      //printf("SKIPPING\n" );
       continue;
     }
     danglings[fromID] = 0;//not a dangling webpage.
@@ -130,6 +133,8 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
     i++;
   }//end while
 
+  printf("SELF LINKS: %d\n",self_link );
+
 
   for(int i = 0; i < nodes+1; i++){
     if(row_ptr[i+1] - row_ptr[i] > 1){
@@ -137,27 +142,13 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
     }
   }
 
-  /*
-  printf("col idx AFTER SORT:\n" );
-  for(int i = 0; i <edges; i++){
-    printf("col_idx[%d]: %d\n",i, col_idx[i] );
-  }
-*/
-
-
-  /* By first sorting based on FromNodeId, followed by sorting based on ToNodeId, we will
-  Always end up with correct  col_idx positioning.
-  insertionSort2(fromArr, toArr, edges);
-  insertionSort2(toArr, fromArr, edges); //TODO cant sort them too large.
-  memcpy(&col_idx, &fromArr, sizeof(col_idx));
-  */
 
 
   // Create the values for the val array.
   int tmp_num = 0;
   int tmp_divident = 0;
   int val_idx = 0;
-  for(i = 0; i < edges; i++){
+  for(i = 0; i < edges-self_link; i++){
     tmp_num = col_idx[i];
     tmp_divident = from_ctr[tmp_num];
     val[val_idx] = 1.0/tmp_divident;
