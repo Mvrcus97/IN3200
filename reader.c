@@ -10,14 +10,14 @@ void read_graph_from_file(int* n, int* e, int** r_ptr, int** c_idx, double ** v,
   double *val;
 
 
-  if ((fptr = fopen("web-NotreDame.txt", "r")) == NULL){
+  if ((fptr = fopen("txt2.txt", "r")) == NULL){
     printf("Error! opening file");
     exit(1);
    }
 
    //1)  - Count the number of FromNodeId and ToNodeId
    count_to_and_from(string, fptr, &to_ctr, &from_ctr, &nodes, &edges);
-   fptr = fopen("web-NotreDame.txt", "r"); //reset file pointer
+   fptr = fopen("txt2.txt", "r"); //reset file pointer
 
    //2) -  Create the CRS
    create_crs(string, fptr, to_ctr, from_ctr, nodes, edges, &row_ptr, &col_idx, &val, &danglings);
