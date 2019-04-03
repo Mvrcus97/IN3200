@@ -23,7 +23,7 @@ The algorithm is divided into 3 parts.
 	III) Return the CRS and the Dangling array. 
 
 
-2) Giving each webpage a score. 
+2!) Giving each webpage a score. 
 
 	I've included a bunch of sequential functions for a deeper
 	understanding of the different algorithms. These were the
