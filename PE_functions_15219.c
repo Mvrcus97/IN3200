@@ -6,6 +6,9 @@ void print_line(){ printf("-----------------------------------------------------
 
 // -------------------------------------------------PART 1 - READING THE FILE ----------------------------
 
+/*    This is the actual function called by main.
+      The function reads a text file, creates a CRS and returns to main..
+*/
 void read_graph_from_file(char filename[], int* n, int* e, int** r_ptr, int** c_idx, double ** v, int ** d){
   FILE *fptr;
   char string[256];
@@ -149,7 +152,6 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
   }
 
 
-
   // Create the values for the val array.
   int tmp_num = 0;
   int tmp_divident = 0;
@@ -167,15 +169,18 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
   *v = val;
   *d = danglings;
 
-  free(to_ctr);
+  free(fromArr);
+  free(toArr);
   free(from_ctr);
+  free(to_ctr);
 
 }//end create_crs
 
-
+//Used in the qsort function.
 int cmpfunc (const void * a, const void * b) {
    return ( *(int*)a - *(int*)b );
 }
+
 
 // ------------------------ END PART 1-------------------------------
 
@@ -193,13 +198,12 @@ int cmpfunc (const void * a, const void * b) {
 *   or all iterations are complete.
 */
 void PageRank_iterations(int nodes, int edges, double d, double eps, int* row_ptr, int* col_idx, double* val, int* danglings, int itr, double** scores){
-  double* x = malloc(nodes*sizeof(double*));
-  double* x_new = malloc(nodes*sizeof(double*));
+  double* x = malloc(nodes*sizeof(double));
+  double* x_new = malloc(nodes*sizeof(double));
   double* tmp;
   double baseVal = 1.0/nodes;
   int i;
 
-  printf("AVAIBLE THREADS FUNC: %d\n",omp_get_num_threads());
   //Initialize x.
   for(i = 0; i < nodes; i++){
     x[i] = baseVal;
@@ -305,6 +309,7 @@ void PageRank_iterations(int nodes, int edges, double d, double eps, int* row_pt
 
   //Finally update output to the correct webpage ranks.
   *scores = x;
+  free(x_new);
 }//end PageRank_iterations
 
 
@@ -397,8 +402,8 @@ void check_col(int nodes, int edges, int* col_idx, double* val){
 * indicies are located.
 */
 void top_n_webpages(int nodes, int n, double* scores, double** top_n){
-  double *top_n_scores = malloc(sizeof(double*)*n);
-  int *page_idx = malloc(sizeof(int*)*nodes);
+  double *top_n_scores = malloc(sizeof(double)*n);
+  int *page_idx = malloc(sizeof(int)*nodes);
   top_k_sort(nodes, n, scores, page_idx);
 
   printf("                Top %d Pages\n", n );
@@ -411,6 +416,7 @@ void top_n_webpages(int nodes, int n, double* scores, double** top_n){
     top_n_scores[i] = scores[i];
   }
 *top_n = top_n_scores;
+free(page_idx);
 }//end top_n_webpages
 
 

@@ -3,24 +3,23 @@
 
 int main(int argc, char **args) {
   if (argc != 6) {
+      print_line();
       printf("Usage: ./run 'file_name' 'damping_factor' 'epsilon' 'top_n_webpages' 'threads'\n");
+      print_line();
+      printf("Example run with all avaible threads:\n" );
+      printf("./run web-NotreDame.txt 0.85 0.0000000000001 10 0\n" );
+      print_line();
       return 0;
   }
   char filename[32];
   strncpy(filename, args[1], 32);
-  double damping = atof(args[2]); //TODO check for errors here.
-  double epsilon = atof(args[3]); //TODO check for errors here.
-  int n = atoi(args[4]);       //TODO check for errors here.
+  double damping = atof(args[2]);
+  double epsilon = atof(args[3]);
+  int n = atoi(args[4]);
   int threads = atoi(args[5]);
 
-  if( threads == 0){
-    threads = omp_get_max_threads();
-  }
-  omp_set_dynamic(0);  //Force openMP to use given number of threads
-  omp_set_num_threads(threads); //Set threads
-
   if(n <0){
-    printf("You want to show top %d pages? Come on man..\n",(int)n);
+    printf("You want to show top %d pages? Come on man..\n",n);
     return 0;
   }
 
@@ -29,6 +28,11 @@ int main(int argc, char **args) {
     return 0;
   }
 
+  if( threads == 0){
+    threads = omp_get_max_threads();
+  }
+  omp_set_dynamic(0);  //Force openMP to use given number of threads
+  omp_set_num_threads(threads); //Set threads
 
   int *row_ptr, *col_idx, *danglings;
   double *val, *scores, *top_n_scores;
@@ -46,7 +50,7 @@ int main(int argc, char **args) {
 
 
   start = omp_get_wtime(); // Returns time in seconds.
-  PageRank_iterations(nodes, edges, damping, epsilon, row_ptr, col_idx, val, danglings, 1000, &scores);
+  PageRank_iterations(nodes, edges, damping, epsilon, row_ptr, col_idx, val, danglings, 1000, &scores);//max 1000 iterations.
   end = omp_get_wtime();
   tot = end - start;
   printf("    Time Result - Page Rank: [%fs]\n",tot);
