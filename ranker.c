@@ -1,5 +1,7 @@
 #include "exam_header.h"
 
+//------------PART 2 - GIVING THE PAGES A RANKING -------------------------
+
 
 /*  This is the actual function called to calculate the PageRanks.
 *   Iterativly update the scores of all webpages. Stop when either the scores have converged,
@@ -26,6 +28,7 @@ void PageRank_iterations(int nodes, int edges, double d, double eps, int* row_pt
   #pragma omp parallel private(i)
   {
   for( i = 0; i < itr; i++){
+
     //Step 1: Calculate W.
     #pragma omp single
     {
@@ -33,12 +36,12 @@ void PageRank_iterations(int nodes, int edges, double d, double eps, int* row_pt
       sum = 0.0;
     }
 
-      #pragma omp for reduction(+:sum)
-      for( int i = 0; i <nodes; i++){
-        if(danglings[i]){
-          sum += x[i];
-        }
+    #pragma omp for reduction(+:sum)
+    for( int i = 0; i <nodes; i++){
+      if(danglings[i]){
+        sum += x[i];
       }
+    }
 
     #pragma omp single
     {
@@ -47,14 +50,14 @@ void PageRank_iterations(int nodes, int edges, double d, double eps, int* row_pt
     }
 
     #pragma omp for
-      for( int i = 0; i < nodes; i++){
-        x_new[i] = w;
-      }
-      #pragma omp single
-      {
-       end = omp_get_wtime();
-       totW += end - start;
-      }
+    for( int i = 0; i < nodes; i++){
+      x_new[i] = w;
+    }
+    #pragma omp single
+    {
+      end = omp_get_wtime();
+      totW += end - start;
+    }
 
     //Step 2: Calculate Ax.
     #pragma omp single
@@ -86,39 +89,34 @@ void PageRank_iterations(int nodes, int edges, double d, double eps, int* row_pt
     x = tmp;
 
     max = 0.0;
-  }
+    }
 
     //Step 4: Check if converged
-  #pragma omp for private(curr_val) reduction(max:max)
-  for(int k = 0; k<nodes; k++){
-    if(( curr_val= fabs(x[i] - x_new[i])) > max){
-      max = curr_val;
+    #pragma omp for private(curr_val) reduction(max:max)
+    for(int k = 0; k<nodes; k++){
+      if(( curr_val= fabs(x[i] - x_new[i])) > max){
+        max = curr_val;
+      }
     }
-  }
 
-  #pragma omp single
-  {
-    //printf("MAX DIFF: %lf. eps: %lf\n",max, eps );
-    if(max < eps) stop = 1;
-  }
-  if(stop)break;
+    #pragma omp single
+    {
+      //printf("MAX DIFF: %lf. eps: %lf\n",max, eps );
+      if(max < eps) stop = 1;
+    }
 
+    if(stop)break;
 
   }//End for iteration
   #pragma omp single
   {
-    done = i;
+    done = i; //How many iterations did it take?
   }
   }//end Parallel
 
-  printf("\nConverged after %d iterations. Results:: \n", done);
-
-  printf("Time W: %lf.  Time Ax: %lf\n",totW, totA );
-  //for(i = 0; i < nodes; i++){
-    //printf("x[%d]:%f  ",i, x[i] );
-  //}
-  printf("\n\n" );
-
+  printf("   Converged after [%d] iterations. \n", done);
+  printf("   Time W: [%lfs]   Time Ax: [%lfs]\n",totW, totA );
+  print_line();
 
 
   //Finally update output to the correct webpage ranks.
@@ -127,6 +125,11 @@ void PageRank_iterations(int nodes, int edges, double d, double eps, int* row_pt
 
 
 
+/*
+*     THE FUNCTIONS BELOW ARE SEQUENTIAL SOLUTIONS OF THE DIFFERENT STEPS DONE ABOVE.
+*     THESE CAN BE USED TO GET A BETTER UNDERSTANDING OF HOW THE ALGOIRTHM ABOVE WORKS.
+*
+*/
 
 /*  This functions calculates part 1/2 of the iterative procedure.
 *   Updates x_new to contain part 1 of 2 of the iterative procedure.
@@ -185,7 +188,7 @@ int early_stopping(int nodes, double* x, double* x_new, double eps){
   return res;
 }
 
-
+/* This function is used to debug the CRS. Each columns should add up to either 0 or 1. */
 void check_col(int nodes, int edges, int* col_idx, double* val){
   double sum = 0.0;
   for(int i = 0; i<nodes; i++){
@@ -196,3 +199,5 @@ void check_col(int nodes, int edges, int* col_idx, double* val){
   sum = 0.0;
   }
 }
+
+//------------------------------END PART 2 - RANKING ------------------------------------------------

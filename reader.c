@@ -1,8 +1,11 @@
 
 #include "exam_header.h"
 
-
-void read_graph_from_file(int* n, int* e, int** r_ptr, int** c_idx, double ** v, int ** d){
+// -------------------------------------------------PART 1 - READING THE FILE ----------------------------
+void print_line(){
+  printf("------------------------------------------------------\n");
+}
+void read_graph_from_file(char filename[], int* n, int* e, int** r_ptr, int** c_idx, double ** v, int ** d){
   FILE *fptr;
   char string[256];
   int *to_ctr, *from_ctr, *row_ptr, *col_idx, *danglings;
@@ -10,14 +13,14 @@ void read_graph_from_file(int* n, int* e, int** r_ptr, int** c_idx, double ** v,
   double *val;
 
 
-  if ((fptr = fopen("txt2.txt", "r")) == NULL){
-    printf("Error! opening file");
+  if ((fptr = fopen(filename, "r")) == NULL){
+    printf("Error opening file. [%s]\n", filename);
     exit(1);
    }
 
    //1)  - Count the number of FromNodeId and ToNodeId
    count_to_and_from(string, fptr, &to_ctr, &from_ctr, &nodes, &edges);
-   fptr = fopen("txt2.txt", "r"); //reset file pointer
+   fptr = fopen(filename, "r"); //reset file pointer
 
    //2) -  Create the CRS
    create_crs(string, fptr, to_ctr, from_ctr, nodes, edges, &row_ptr, &col_idx, &val, &danglings);
@@ -53,7 +56,8 @@ void count_to_and_from(char* string, FILE* fptr, int** to_ctr, int** from_ctr, i
   int fromID, toID;
   int *from_counter = malloc(sizeof(int)*nodes);
   int *to_counter = malloc(sizeof(int)*nodes);
-  printf("Nodes read: %d   Edges read:  %d\n",nodes, edges );
+  print_line();
+  printf(" Web Graph contains [%d] Nodes and [%d] Edges\n",nodes, edges );
   skip_lines(string, fptr, 1); //skip next line: "# FromNodeId ToNodeId".
 
   //Read all values from file
@@ -133,9 +137,10 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
     i++;
   }//end while
 
-  printf("SELF LINKS: %d\n",self_link );
+  printf("           [%d] Self Linkage Found.\n",self_link );
+  print_line();
 
-
+  // col_idx for each row is now correct, but we need them in ascending order.
   for(int i = 0; i < nodes+1; i++){
     if(row_ptr[i+1] - row_ptr[i] > 1){
       qsort(&col_idx[row_ptr[i]], row_ptr[i+1]-row_ptr[i], sizeof(int), cmpfunc);
@@ -167,30 +172,8 @@ void create_crs(char* string, FILE* fptr, int* to_ctr, int* from_ctr, int nodes,
 }//end create_crs
 
 
-
 int cmpfunc (const void * a, const void * b) {
    return ( *(int*)a - *(int*)b );
 }
 
-/* Function to sort one array and have the other array follow.
-This is used to sort the FromNodeId, and have the ToNodeId follow same order.*/
-void insertionSort2(int arr1[], int arr2[], int n){
-
-    int i, key1, key2, j;
-    for (i = 1; i < n; i++) {
-        key1 = arr1[i];
-        key2 = arr2[i];
-        j = i - 1;
-
-        /* Move elements of arr1[0..i-1], that are
-          greater than key, to one position ahead
-          of their current position */
-        while (j >= 0 && arr1[j] > key1) {
-            arr1[j + 1] = arr1[j];
-            arr2[j + 1] = arr2[j];
-            j = j - 1;
-        }
-        arr1[j + 1] = key1;
-        arr2[j + 1] = key2;
-    }
-}
+// ------------------------ END PART 1-------------------------------

@@ -1,5 +1,5 @@
 #include "exam_header.h"
-
+// ----------------PART 3 - FINDING THE TOP N PAGES ---------------------------------
 
 /*  Find the top n pages, and print their webpage number aswell as their score.
 * This is done by implementing a top-k-sort, while keeping track of where the original
@@ -10,11 +10,11 @@ void top_n_webpages(int nodes, int n, double* scores, double** top_n){
   int *page_idx = malloc(sizeof(int*)*nodes);
   top_k_sort(nodes, n, scores, page_idx);
 
-  printf("----------------Top %d Pages---------------------\n", n );
+  printf("                Top %d Pages\n", n );
   for(int i = 0; i < n; i++){
-    printf("%d) - WebPage[%d]    Score: %f.  \n",i+1, page_idx[i]+1, scores[i] );
+    printf("%d) -   WebPage[%d]   Score: [%f]  \n",i+1, page_idx[i], scores[i] );
   }
-  printf("------------------------------------------------\n" );
+  print_line();
 
   for(int i = 0; i <n; i++){
     top_n_scores[i] = scores[i];
@@ -36,7 +36,8 @@ void top_k_sort(int nodes, int k, double *scores, int *page_idx){
     page_idx[i] = i;
   }
 
-  insertionSortDec(scores, k, page_idx); //Sort top k elements.
+  insertionSortDec(scores, k-1, page_idx); //Sort top k elements.
+
 
   for(i = k; i < nodes; i++){
     if(scores[i] > scores[k]){
@@ -72,3 +73,5 @@ void insertionSortDec(double* scores, int n, int* page_idx){
       page_idx[i+1] = tmp_i;
     } // end for k.
 }//end insertionSortDec
+
+// ---------------------------END PART 3 - FINDING THE TOP N PAGES. --------------------
