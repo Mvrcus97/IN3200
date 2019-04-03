@@ -8,6 +8,7 @@ The algorithm is divided into 3 parts.
 1) Reading the text file
 2) Giving each webpage a score
 3) Finding the top N web pages.
+
 For more information read the report. 
 
 How to compile
