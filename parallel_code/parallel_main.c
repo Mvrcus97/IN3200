@@ -60,10 +60,12 @@ int main(int argc, char *argv[]){
   //2D decomposition of the m x n pixels evenly among the MPI processes ///
   MPI_Comm comm_cart;
   int my_xstart, my_xstop, my_ystart, my_ystop, my_imax, my_jmax;
-  int dim[2], period[2], reorder, my_coord[2];
+  int period[2], reorder, my_coord[2];
+  int dim[2] = {0,0};
+  MPI_Dims_create(num_procs, 2, dim);
 
-  dim[0] = 2; period[0] = 0; // x direction TODO for mpi -np X
-  dim[1] = 2; period[1] = 0; // y direction
+  period[0] = 0; // x direction TODO for mpi -np X
+  period[1] = 0; // y direction
   reorder=1;
 
   MPI_Cart_create(MPI_COMM_WORLD, 2, dim, period, reorder, &comm_cart);
@@ -71,15 +73,15 @@ int main(int argc, char *argv[]){
   MPI_Cart_coords(comm_cart, my_rank, 2, my_coord);
 
 
-  my_xstart = my_coord[0]*(n-2)/dim[0];
-  my_xstop = (my_coord[0]+1)*(n-2)/dim[0];
-  my_imax = my_xstop-my_xstart+2; // USE THSE FOR ALOCATE IMG ??
+  my_xstart = my_coord[1]*(n-2)/dim[0];
+  my_xstop = (my_coord[1]+1)*(n-2)/dim[0];
+  my_imax = my_xstop-my_xstart; // USE THSE FOR ALOCATE IMG ??
 
-  my_ystart = my_coord[1]*(m-2)/dim[1];
-  my_ystop = (my_coord[1]+1)*(m-2)/dim[1];
-  my_jmax = my_ystop-my_ystart+2;
+  my_ystart = my_coord[0]*(m-2)/dim[1];
+  my_ystop = (my_coord[0]+1)*(m-2)/dim[1];
+  my_jmax = my_ystop-my_ystart; //Horizontal stripes TODO REMOVE +2
 
-  //printf("RANK: %d, pos: (%d, %d)  x: (%d, %d)  y: (%d, %d) iMax: %d jMax: %d\n", my_rank, my_coord[0], my_coord[1], my_xstart, my_xstop, my_ystart, my_ystop, my_imax, my_jmax );
+  printf("RANK: %d, pos: (%d, %d)  x: (%d, %d)  y: (%d, %d) iMax: %d jMax: %d\n", my_rank, my_coord[0], my_coord[1], my_xstart, my_xstop, my_ystart, my_ystop, my_imax, my_jmax );
 
 
   printf("%d m %d: n %d: \n",my_rank, my_jmax, my_imax );
@@ -91,7 +93,7 @@ int main(int argc, char *argv[]){
   /* of image_chars and copy the values into u */
   MPI_Status status;
   int sub_image_size = n*m/num_procs;
-  my_image_chars = malloc(sub_image_size * sizeof(int));
+  my_image_chars = calloc(sub_image_size, sizeof(int));
 
   if(my_rank == 0){
     //Master proccess: Request indicies, create sub_image and send it.
@@ -106,7 +108,7 @@ int main(int argc, char *argv[]){
       MPI_Recv(&to_send_idx, 4 , MPI_INT, i, 0, MPI_COMM_WORLD, &status);
       curr_x_start = to_send_idx[0]; curr_x_stop = to_send_idx[1];
       curr_y_start = to_send_idx[2]; curr_y_stop = to_send_idx[3];
-      printf("FOUND: curr x %d %d , curr y %d %d\n",curr_x_start, curr_x_stop, curr_y_start, curr_y_stop );
+      //printf("FOUND: curr x %d %d , curr y %d %d\n",curr_x_start, curr_x_stop, curr_y_start, curr_y_stop );
       for(int j = curr_y_start; j<curr_y_stop; j++){
         for(int k = curr_x_start; k<curr_x_stop; k++){
           sub_image[idx_ctr] = image_chars[(n*j) +k];
@@ -141,25 +143,28 @@ int main(int argc, char *argv[]){
 
   convert_jpeg_to_image (my_image_chars, &u);
   iso_diffusion_denoising_parallel(&u, &u_bar, kappa, iters, comm_cart);
-  //TEST TEST
 
   convert_image_to_jpeg (&u_bar, my_image_chars);
+  //TEST TEST
 
   if(my_rank == 0){
-    printf("y: %d, x: %d,\n", my_ystop-my_ystart, my_xstop-my_xstart);
-    export_JPEG_file("output0.jpg", my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
+    printf("y: %d, x: %d,\n", my_jmax, my_imax);
+    export_JPEG_file("output0.jpg",  my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
   }
+
   if(my_rank == 1){
-    printf("y: %d, x: %d,\n", my_ystop-my_ystart, my_xstop-my_xstart);
-    export_JPEG_file("output1.jpg", my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
+    printf("y: %d, x: %d,\n",my_jmax, my_imax);
+    export_JPEG_file("output1.jpg",  my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
   }
+
   if(my_rank == 2){
-    printf("y: %d, x: %d,\n", my_ystop-my_ystart, my_xstop-my_xstart);
-    export_JPEG_file("output2.jpg", my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
+    printf("y: %d, x: %d,\n", my_jmax, my_imax);
+    export_JPEG_file("output2.jpg",  my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
+
   }
   if(my_rank == 3){
-    printf("y: %d, x: %d,\n", my_ystop-my_ystart, my_xstop-my_xstart);
-    export_JPEG_file("output3.jpg", my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
+    printf("y: %d, x: %d,\n", my_jmax, my_imax);
+    export_JPEG_file("output3.jpg",  my_image_chars, my_ystop-my_ystart, my_xstop-my_xstart, 1, 75);
   }
 
 
@@ -171,14 +176,59 @@ int main(int argc, char *argv[]){
   /* process 0 receives from each process incoming values and */
   /* copy them into the designated region of struct whole_image */
   /* ... */
-  /*if (my_rank==0) {
+
+
+  if( my_rank != 0){
+    int my_idx[4];
+    my_idx[0] = my_xstart; my_idx[1] = my_xstop;
+    my_idx[2] = my_ystart; my_idx[3] = my_ystop;
+    //Send my sub_image in addition to my indicies.
+    MPI_Send(my_image_chars, sub_image_size, MPI_INT, 0, 0, comm_cart);
+    MPI_Send(&my_idx, 4, MPI_INT, 0,0, comm_cart);
+  }
+
+  if(my_rank == 0){
+    //Master proccess. Compile all sub-images together into one large image.
+    int curr_idx[4];
+    unsigned char *sub_image = calloc(sub_image_size, sizeof(int));
+    //For each process recieve sub image
+    for(int i = 1; i < num_procs; i++){
+      MPI_Recv(sub_image, sub_image_size , MPI_INT, i, 0, comm_cart, &status);
+      MPI_Recv(&curr_idx, 4 , MPI_INT, i, 0, comm_cart, &status);
+      add_to_whole_image(sub_image, sub_image_size, curr_idx[0], curr_idx[1], curr_idx[2], curr_idx[3], &whole_image);
+    }
+    //Finally add my own sub image, and print out.
+    add_to_whole_image(my_image_chars, sub_image_size, my_xstart, my_xstop, my_ystart, my_ystop, &whole_image);
     convert_image_to_jpeg(&whole_image, image_chars);
     export_JPEG_file(output_filename, image_chars, m, n, c, 75);
     deallocate_image (&whole_image);
   }
-*/
+
+
+
+  /*
+  if (my_rank==0) {
+    convert_image_to_jpeg(&whole_image, image_chars);
+    export_JPEG_file(output_filename, image_chars, m, n, c, 75);
+    deallocate_image (&whole_image);
+  }
+  */
+
   deallocate_image (&u);
   deallocate_image (&u_bar);
   MPI_Finalize ();
   return 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
